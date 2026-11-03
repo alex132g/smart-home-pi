@@ -1,0 +1,15 @@
+services:
+  smarthome:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MOCK=0
+      - LIGHT_TIMEOUT=30
+      - CO2_LIMIT=1000
+    # give the container access to GPIO pins and the UART for the CO2 sensor
+    devices:
+      - /dev/gpiochip0
+      - /dev/gpiomem
+      - /dev/serial0

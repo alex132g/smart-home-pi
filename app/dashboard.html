@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Home</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #f4f5f7; color: #222; margin: 0; padding: 24px; }
+  h1 { margin-top: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px #0002; }
+  .label { font-size: 14px; color: #666; }
+  .value { font-size: 32px; font-weight: 600; margin-top: 4px; }
+  .warn { background: #fde8e8; }
+  .on { background: #fff7cc; }
+</style>
+</head>
+<body>
+<h1>Smart Home</h1>
+<div class="grid">
+  <div class="card"><div class="label">Temperature</div><div class="value" id="temperature">–</div></div>
+  <div class="card"><div class="label">Humidity</div><div class="value" id="humidity">–</div></div>
+  <div class="card" id="co2card"><div class="label">CO₂</div><div class="value" id="co2">–</div></div>
+  <div class="card"><div class="label">Motion</div><div class="value" id="motion">–</div></div>
+  <div class="card" id="lightcard"><div class="label">Light</div><div class="value" id="light">–</div></div>
+</div>
+<p id="advice"></p>
+<script>
+async function refresh() {
+  const s = await (await fetch('/api/state')).json();
+  if (!s.time) return;
+  temperature.textContent = s.temperature + ' °C';
+  humidity.textContent = s.humidity + ' %';
+  co2.textContent = s.co2 + ' ppm';
+  motion.textContent = s.motion ? 'Yes' : 'No';
+  light.textContent = s.light ? 'ON' : 'OFF';
+  co2card.classList.toggle('warn', s.ventilate);
+  lightcard.classList.toggle('on', s.light);
+  advice.textContent = s.ventilate ? '⚠️ CO₂ is high, open a window.' : '';
+}
+refresh(); setInterval(refresh, 2000);
+</script>
+</body>
+</html>

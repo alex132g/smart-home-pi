@@ -49,7 +49,10 @@ python3 test_logic.py           # run the tests
 
 **On the Raspberry Pi:**
 ```
-docker compose up -d --build    # open http://<pi-ip>:8000
+curl -fsSL https://get.docker.com | sh    # install Docker (only once)
+git clone https://github.com/alex132g/smart-home-pi.git
+cd smart-home-pi
+sudo docker compose up -d --build    # open http://<pi-ip>:8000
 ```
 
 Settings in `docker-compose.yml`: `LIGHT_TIMEOUT` (seconds), `CO2_LIMIT` (ppm). If port 8000 is already taken on your laptop, run with `PORT=8090`.

@@ -9,7 +9,7 @@ from pathlib import Path
 from sensors import get_sensors
 
 LIGHT_TIMEOUT = int(os.getenv("LIGHT_TIMEOUT", "30"))  # seconds of no motion before light turns off
-CO2_LIMIT = int(os.getenv("CO2_LIMIT", "1000"))  # ppm, above this the room needs fresh air
+PM25_LIMIT = int(os.getenv("PM25_LIMIT", "25"))  # µg/m³ (EU yearly limit), above this the room needs fresh air
 
 state = {}
 DASHBOARD = (Path(__file__).parent / "dashboard.html").read_bytes()
@@ -29,8 +29,8 @@ def loop():
             last_motion = now
         light = light_should_be_on(reading["motion"], last_motion, now)
         sensors.set_light(light)
-        state.update(reading, light=light, ventilate=(reading["co2"] or 0) > CO2_LIMIT, time=now)
-        time.sleep(2)  # DHT22 can't be read faster than every 2 s
+        state.update(reading, light=light, ventilate=(reading["pm25"] or 0) > PM25_LIMIT, time=now)
+        time.sleep(2)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -50,6 +50,6 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     threading.Thread(target=loop, daemon=True).start()
-    port = int(os.getenv("PORT", "8000"))
+    port = int(os.getenv("PORT", "9000"))
     print(f"Dashboard on http://localhost:{port}")
     ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()

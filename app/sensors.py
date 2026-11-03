@@ -4,17 +4,13 @@ import random
 import time
 
 MOCK = os.getenv("MOCK", "0") == "1"
+HAS_PMS5003 = os.getenv("PMS5003", "0") == "1"  # particulate sensor is sold separately from the Enviro+
+TEMP_FACTOR = float(os.getenv("TEMP_FACTOR", "2.25"))  # tune by comparing with a room thermometer
 
 
-def mhz19_checksum(packet: bytes) -> int:
-    # MH-Z19 datasheet: 0xFF - sum(bytes 1..7) + 1
-    return (0xFF - (sum(packet[1:8]) & 0xFF) + 1) & 0xFF
-
-
-def parse_mhz19(resp: bytes):
-    if len(resp) != 9 or resp[0] != 0xFF or resp[1] != 0x86 or mhz19_checksum(resp) != resp[8]:
-        return None
-    return resp[2] * 256 + resp[3]
+def compensate_temperature(raw: float, cpu: float) -> float:
+    # The Pi's CPU heats the BME280 on the HAT; Pimoroni's correction from their examples
+    return round(raw - (cpu - raw) / TEMP_FACTOR, 1)
 
 
 class MockSensors:
@@ -27,7 +23,11 @@ class MockSensors:
         return {
             "temperature": round(21 + random.uniform(-1, 1), 1),
             "humidity": round(45 + random.uniform(-5, 5), 1),
-            "co2": random.randint(450, 1300),
+            "pressure": round(1013 + random.uniform(-3, 3), 1),
+            "pm25": random.randint(2, 40) if HAS_PMS5003 else None,
+            "oxidising": round(random.uniform(10, 30), 1),
+            "reducing": round(random.uniform(200, 400), 1),
+            "nh3": round(random.uniform(50, 150), 1),
             "motion": time.time() < self._motion_until,
         }
 
@@ -36,31 +36,47 @@ class MockSensors:
 
 
 class PiSensors:
-    """DHT22 on GPIO4, MH-Z19B on UART /dev/serial0, PIR on GPIO17, light relay/LED on GPIO27."""
+    """Pimoroni Enviro+ HAT (BME280, MICS6814 gas, optional PMS5003), PIR on GPIO17, light on GPIO26."""
 
     def __init__(self):
-        import adafruit_dht
-        import board
-        import serial
+        from bme280 import BME280
+        from enviroplus import gas
         from gpiozero import LED, MotionSensor
+        from smbus2 import SMBus
 
-        self.dht = adafruit_dht.DHT22(board.D4)
-        self.uart = serial.Serial("/dev/serial0", 9600, timeout=1)
+        self.bme280 = BME280(i2c_dev=SMBus(1))
+        self.gas = gas
         self.pir = MotionSensor(17)
-        self.light = LED(27)
-        self.last = {"temperature": None, "humidity": None}
+        self.light = LED(26)  # GPIO27 is taken by the PMS5003 reset pin
+        self.pms = None
+        if HAS_PMS5003:
+            from pms5003 import PMS5003
+            self.pms = PMS5003(device="/dev/serial0")
 
-    def _co2(self):
-        self.uart.reset_input_buffer()
-        self.uart.write(bytes([0xFF, 0x01, 0x86, 0, 0, 0, 0, 0, 0x79]))
-        return parse_mhz19(self.uart.read(9))
+    def _cpu_temp(self):
+        with open("/sys/class/thermal/thermal_zone0/temp") as f:
+            return int(f.read()) / 1000
+
+    def _pm25(self):
+        if not self.pms:
+            return None
+        try:
+            return self.pms.read().pm_ug_per_m3(2.5)
+        except Exception:  # pms5003 raises its own timeout/checksum errors; skip one bad frame
+            return None
 
     def read(self):
-        try:
-            self.last = {"temperature": self.dht.temperature, "humidity": self.dht.humidity}
-        except RuntimeError:
-            pass  # DHT22 read failures are normal, keep the last good value
-        return {**self.last, "co2": self._co2(), "motion": self.pir.motion_detected}
+        g = self.gas.read_all()  # gas values are resistance in ohms; shown in kΩ
+        return {
+            "temperature": compensate_temperature(self.bme280.get_temperature(), self._cpu_temp()),
+            "humidity": round(self.bme280.get_humidity(), 1),
+            "pressure": round(self.bme280.get_pressure(), 1),
+            "pm25": self._pm25(),
+            "oxidising": round(g.oxidising / 1000, 1),
+            "reducing": round(g.reducing / 1000, 1),
+            "nh3": round(g.nh3 / 1000, 1),
+            "motion": self.pir.motion_detected,
+        }
 
     def set_light(self, on: bool):
         self.light.on() if on else self.light.off()

@@ -20,23 +20,32 @@
 <div class="grid">
   <div class="card"><div class="label">Temperature</div><div class="value" id="temperature">–</div></div>
   <div class="card"><div class="label">Humidity</div><div class="value" id="humidity">–</div></div>
-  <div class="card" id="co2card"><div class="label">CO₂</div><div class="value" id="co2">–</div></div>
+  <div class="card"><div class="label">Pressure</div><div class="value" id="pressure">–</div></div>
+  <div class="card" id="pmcard"><div class="label">Particles PM2.5</div><div class="value" id="pm25">–</div></div>
+  <div class="card"><div class="label">Gas: reducing (CO)</div><div class="value" id="reducing">–</div></div>
+  <div class="card"><div class="label">Gas: oxidising (NO₂)</div><div class="value" id="oxidising">–</div></div>
+  <div class="card"><div class="label">Gas: NH₃</div><div class="value" id="nh3">–</div></div>
   <div class="card"><div class="label">Motion</div><div class="value" id="motion">–</div></div>
   <div class="card" id="lightcard"><div class="label">Light</div><div class="value" id="light">–</div></div>
 </div>
 <p id="advice"></p>
+<p class="label">Gas values are sensor resistance: a lower value means more of that gas. The gas sensor needs about 10 minutes to warm up.</p>
 <script>
 async function refresh() {
   const s = await (await fetch('/api/state')).json();
   if (!s.time) return;
   temperature.textContent = s.temperature + ' °C';
   humidity.textContent = s.humidity + ' %';
-  co2.textContent = s.co2 + ' ppm';
+  pressure.textContent = s.pressure + ' hPa';
+  pm25.textContent = s.pm25 === null ? 'no sensor' : s.pm25 + ' µg/m³';
+  reducing.textContent = s.reducing + ' kΩ';
+  oxidising.textContent = s.oxidising + ' kΩ';
+  nh3.textContent = s.nh3 + ' kΩ';
   motion.textContent = s.motion ? 'Yes' : 'No';
   light.textContent = s.light ? 'ON' : 'OFF';
-  co2card.classList.toggle('warn', s.ventilate);
+  pmcard.classList.toggle('warn', s.ventilate);
   lightcard.classList.toggle('on', s.light);
-  advice.textContent = s.ventilate ? '⚠️ CO₂ is high, open a window.' : '';
+  advice.textContent = s.ventilate ? '⚠️ Lots of particles in the air, open a window.' : '';
 }
 refresh(); setInterval(refresh, 2000);
 </script>

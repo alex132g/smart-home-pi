@@ -6,10 +6,13 @@ services:
       - "8000:8000"
     environment:
       - MOCK=0
+      - PMS5003=0       # set to 1 if the PMS5003 particulate sensor is plugged into the Enviro+
+      - TEMP_FACTOR=2.25
       - LIGHT_TIMEOUT=30
-      - CO2_LIMIT=1000
-    # give the container access to GPIO pins and the UART for the CO2 sensor
+      - PM25_LIMIT=25
+    # give the container access to GPIO pins, I2C (Enviro+ sensors) and the UART (PMS5003)
     devices:
       - /dev/gpiochip0
       - /dev/gpiomem
+      - /dev/i2c-1
       - /dev/serial0

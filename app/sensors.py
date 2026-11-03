@@ -39,15 +39,19 @@ class PiSensors:
     """Pimoroni Enviro+ HAT (BME280, MICS6814 gas, optional PMS5003), PIR on GPIO17, light on GPIO26."""
 
     def __init__(self):
+        import gpiod
+        import gpiodevice
         from bme280 import BME280
         from enviroplus import gas
-        from gpiozero import LED, MotionSensor
+        from gpiod.line import Direction, Value
         from smbus2 import SMBus
 
         self.bme280 = BME280(i2c_dev=SMBus(1))
         self.gas = gas
-        self.pir = MotionSensor(17)
-        self.light = LED(26)  # GPIO27 is taken by the PMS5003 reset pin
+        self.Value = Value
+        self.pir = gpiodevice.get_pin("GPIO17", "smarthome-pir", gpiod.LineSettings(direction=Direction.INPUT))
+        # GPIO27 is taken by the PMS5003 reset pin
+        self.light = gpiodevice.get_pin("GPIO26", "smarthome-light", gpiod.LineSettings(direction=Direction.OUTPUT))
         self.pms = None
         if HAS_PMS5003:
             from pms5003 import PMS5003
@@ -75,11 +79,12 @@ class PiSensors:
             "oxidising": round(g.oxidising / 1000, 1),
             "reducing": round(g.reducing / 1000, 1),
             "nh3": round(g.nh3 / 1000, 1),
-            "motion": self.pir.motion_detected,
+            "motion": self.pir[0].get_value(self.pir[1]) == self.Value.ACTIVE,
         }
 
     def set_light(self, on: bool):
-        self.light.on() if on else self.light.off()
+        lines, offset = self.light
+        lines.set_value(offset, self.Value.ACTIVE if on else self.Value.INACTIVE)
 
 
 def get_sensors():

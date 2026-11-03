@@ -1,5 +1,6 @@
 FROM python:3.11-slim
-RUN apt-get update && apt-get install -y --no-install-recommends gcc swig liblgpio-dev libgpiod2 && rm -rf /var/lib/apt/lists/*
+# gcc builds spidev (used by the Enviro+ LCD library), which has no ready-made ARM wheel
+RUN apt-get update && apt-get install -y --no-install-recommends gcc && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

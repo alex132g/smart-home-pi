@@ -1,5 +1,5 @@
-gpiozero==2.0.1
-lgpio==0.2.2.0
+gpiod==2.5.0
+gpiodevice==0.1.0
 enviroplus==1.0.2
 pimoroni-bme280==1.0.0
 pms5003==1.0.1

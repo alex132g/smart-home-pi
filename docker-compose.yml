@@ -3,9 +3,10 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8090:8090"
     environment:
       - MOCK=0
+      - PORT=8090
       - PMS5003=0       # set to 1 if the PMS5003 particulate sensor is plugged into the Enviro+
       - TEMP_FACTOR=2.25
       - LIGHT_TIMEOUT=30

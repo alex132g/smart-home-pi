@@ -22,16 +22,17 @@
   <div class="card"><div class="label">Humidity</div><div class="value" id="humidity">–</div></div>
   <div class="card"><div class="label">Pressure</div><div class="value" id="pressure">–</div></div>
   <div class="card" id="pmcard"><div class="label">Particles PM2.5</div><div class="value" id="pm25">–</div></div>
-  <div class="card"><div class="label">Gas: reducing (CO)</div><div class="value" id="reducing">–</div></div>
-  <div class="card"><div class="label">Gas: oxidising (NO₂)</div><div class="value" id="oxidising">–</div></div>
-  <div class="card"><div class="label">Gas: NH₃</div><div class="value" id="nh3">–</div></div>
+  <div class="card"><div class="label">CO (estimate)</div><div class="value" id="co">–</div></div>
+  <div class="card"><div class="label">NO₂ (estimate)</div><div class="value" id="no2">–</div></div>
+  <div class="card"><div class="label">NH₃ (estimate)</div><div class="value" id="nh3">–</div></div>
   <div class="card"><div class="label">Light sensor</div><div class="value" id="lux">–</div></div>
   <div class="card"><div class="label">Motion</div><div class="value" id="motion">–</div></div>
   <div class="card" id="lightcard"><div class="label">Lamp</div><div class="value" id="light">–</div></div>
 </div>
 <p id="advice"></p>
-<p class="label">Gas values are sensor resistance: a lower value means more of that gas. The gas sensor needs about 10 minutes to warm up.</p>
+<p class="label">Gas values are rough estimates in ppm (parts per million), not lab measurements. The sensor needs time to warm up and must be calibrated in fresh air.</p>
 <script>
+const ppm = v => v === null ? '–' : v + ' ppm';
 async function refresh() {
   const s = await (await fetch('/api/state')).json();
   if (!s.time) return;
@@ -39,9 +40,9 @@ async function refresh() {
   humidity.textContent = s.humidity + ' %';
   pressure.textContent = s.pressure + ' hPa';
   pm25.textContent = s.pm25 === null ? 'no sensor' : s.pm25 + ' µg/m³';
-  reducing.textContent = s.reducing + ' kΩ';
-  oxidising.textContent = s.oxidising + ' kΩ';
-  nh3.textContent = s.nh3 + ' kΩ';
+  co.textContent = ppm(s.co_ppm);
+  no2.textContent = ppm(s.no2_ppm);
+  nh3.textContent = ppm(s.nh3_ppm);
   lux.textContent = s.lux + ' lux';
   motion.textContent = s.motion ? 'Yes' : 'No';
   light.textContent = s.light ? 'ON' : 'OFF';

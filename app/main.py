@@ -7,7 +7,7 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from sensors import get_sensors
+from sensors import gas_estimates, get_sensors
 
 LIGHT_TIMEOUT = int(os.getenv("LIGHT_TIMEOUT", "30"))  # seconds of no motion before light turns off
 PM25_LIMIT = int(os.getenv("PM25_LIMIT", "25"))  # µg/m³ (EU yearly limit), above this the room needs fresh air
@@ -30,7 +30,7 @@ def loop():
             last_motion = now
         light = light_should_be_on(reading["motion"], last_motion, now)
         sensors.set_light(light)
-        state.update(reading, light=light, ventilate=(reading["pm25"] or 0) > PM25_LIMIT, time=now)
+        state.update(reading, **gas_estimates(reading), light=light, ventilate=(reading["pm25"] or 0) > PM25_LIMIT, time=now)
         time.sleep(2)
 
 

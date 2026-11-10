@@ -1,4 +1,5 @@
 """Sensor drivers. MOCK=1 gives fake values so the app runs without a Pi."""
+import math
 import os
 import random
 import time
@@ -6,6 +7,25 @@ import time
 MOCK = os.getenv("MOCK", "0") == "1"
 HAS_PMS5003 = os.getenv("PMS5003", "0") == "1"  # particulate sensor is sold separately from the Enviro+
 TEMP_FACTOR = float(os.getenv("TEMP_FACTOR", "2.25"))  # tune by comparing with a room thermometer
+
+# Each gas: (resistance key, clean-air resistance R0 in kΩ, curve slope, curve offset).
+# Curves are the MICS6814 datasheet fits from roscoe81/enviro-monitor.
+# shortcut: R0 defaults were measured during warm-up, set GAS_R0_* after calibrating (see README)
+GASES = {
+    "co_ppm": ("reducing", float(os.getenv("GAS_R0_REDUCING", "410")), -1.25, 0.64),
+    "no2_ppm": ("oxidising", float(os.getenv("GAS_R0_OXIDISING", "7.4")), 1, -0.8129),
+    "nh3_ppm": ("nh3", float(os.getenv("GAS_R0_NH3", "114")), -1.8, -0.163),
+}
+
+
+def gas_ppm(kohm: float, r0: float, slope: float, offset: float):
+    if kohm <= 0:  # bad ADC reading, log10 would crash the loop
+        return None
+    return round(10 ** (slope * math.log10(kohm / r0) + offset), 2)
+
+
+def gas_estimates(reading: dict) -> dict:
+    return {name: gas_ppm(reading[key], r0, slope, offset) for name, (key, r0, slope, offset) in GASES.items()}
 
 
 def compensate_temperature(raw: float, cpu: float) -> float:

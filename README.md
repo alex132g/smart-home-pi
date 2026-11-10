@@ -9,7 +9,7 @@ A Raspberry Pi reads room sensors, turns the light on when someone is in the roo
 | Function | Sensor / part | How it works |
 |---|---|---|
 | Temperature, humidity, pressure | Enviro+ HAT (BME280) | Read every 2 s. Temperature is corrected for heat from the Pi's CPU |
-| Gases (CO, NO₂, NH₃) | Enviro+ HAT (MICS6814) | Shown as sensor resistance. Lower value = more gas |
+| Gases (CO, NO₂, NH₃) | Enviro+ HAT (MICS6814) | Rough estimate in ppm, calculated from the sensor's resistance and a clean-air baseline |
 | Particles PM2.5 (optional) | PMS5003, plugs into the Enviro+ | Above 25 µg/m³ the dashboard says "open a window" |
 | Presence ("location") | PIR motion sensor HC-SR501 | Motion detected = someone is in the room |
 | Light level | Enviro+ HAT (LTR559) | Brightness in the room in lux, shown on the dashboard |
@@ -61,6 +61,16 @@ sudo docker compose up -d --build    # open http://<pi-ip>:8000
 ```
 
 Settings in `docker-compose.yml`: `PMS5003` (1 if you have it), `TEMP_FACTOR` (raise it if the temperature reads too low, lower it if too high), `LIGHT_TIMEOUT` (seconds), `PM25_LIMIT` (µg/m³). If port 8000 is already taken on your laptop, run with `PORT=8090`.
+
+## Calibration
+
+The gas sensor only measures electrical resistance. To turn that into ppm it needs to know its resistance in clean air (R0).
+
+1. Run the Pi with the Enviro+ next to an open window until the gas values stop climbing (at least 30 minutes).
+2. Open `http://<pi-ip>:8090/api/state` and note `reducing`, `oxidising` and `nh3` (these are in kΩ).
+3. Put them in `docker-compose.yml` as `GAS_R0_REDUCING`, `GAS_R0_OXIDISING` and `GAS_R0_NH3`, then run `sudo docker compose up -d`.
+
+The result is still an estimate: this sensor is made to detect changes in air quality, not to give exact amounts.
 
 ## Shopping list
 

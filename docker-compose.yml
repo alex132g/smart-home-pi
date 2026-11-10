@@ -9,6 +9,9 @@ services:
       - PORT=8090
       - PMS5003=0       # set to 1 if the PMS5003 particulate sensor is plugged into the Enviro+
       - TEMP_FACTOR=2.25
+      - GAS_R0_REDUCING=410   # clean-air resistance in kΩ, see Calibration in the README
+      - GAS_R0_OXIDISING=7.4
+      - GAS_R0_NH3=114
       - LIGHT_TIMEOUT=30
       - PM25_LIMIT=25
     # give the container access to GPIO pins, I2C (Enviro+ sensors) and the UART (PMS5003)

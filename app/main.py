@@ -3,6 +3,7 @@ import json
 import os
 import threading
 import time
+import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -33,6 +34,14 @@ def loop():
         time.sleep(2)
 
 
+def loop_or_exit():
+    try:
+        loop()
+    except Exception:
+        traceback.print_exc()
+        os._exit(1)  # a dead thread would freeze the dashboard; exiting lets Docker restart us and retry the sensors
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/api/state":
@@ -49,7 +58,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    threading.Thread(target=loop, daemon=True).start()
+    threading.Thread(target=loop_or_exit, daemon=True).start()
     port = int(os.getenv("PORT", "9000"))
     print(f"Dashboard on http://localhost:{port}")
     ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()

@@ -3,4 +3,5 @@ gpiodevice==0.1.0
 enviroplus==1.0.2
 pimoroni-bme280==1.0.0
 pms5003==1.0.1
+ltr559==1.0.0
 smbus2==0.6.1

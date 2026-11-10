@@ -12,7 +12,8 @@ A Raspberry Pi reads room sensors, turns the light on when someone is in the roo
 | Gases (CO, NO₂, NH₃) | Enviro+ HAT (MICS6814) | Shown as sensor resistance. Lower value = more gas |
 | Particles PM2.5 (optional) | PMS5003, plugs into the Enviro+ | Above 25 µg/m³ the dashboard says "open a window" |
 | Presence ("location") | PIR motion sensor HC-SR501 | Motion detected = someone is in the room |
-| Light | LED, or a relay module for a real lamp | ON when there is motion, OFF after 30 s with no motion |
+| Light level | Enviro+ HAT (LTR559) | Brightness in the room in lux, shown on the dashboard |
+| Lamp | LED, or a relay module for a real lamp | ON when there is motion, OFF after 30 s with no motion |
 
 ## Architecture
 

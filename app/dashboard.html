@@ -25,8 +25,9 @@
   <div class="card"><div class="label">Gas: reducing (CO)</div><div class="value" id="reducing">–</div></div>
   <div class="card"><div class="label">Gas: oxidising (NO₂)</div><div class="value" id="oxidising">–</div></div>
   <div class="card"><div class="label">Gas: NH₃</div><div class="value" id="nh3">–</div></div>
+  <div class="card"><div class="label">Light sensor</div><div class="value" id="lux">–</div></div>
   <div class="card"><div class="label">Motion</div><div class="value" id="motion">–</div></div>
-  <div class="card" id="lightcard"><div class="label">Light</div><div class="value" id="light">–</div></div>
+  <div class="card" id="lightcard"><div class="label">Lamp</div><div class="value" id="light">–</div></div>
 </div>
 <p id="advice"></p>
 <p class="label">Gas values are sensor resistance: a lower value means more of that gas. The gas sensor needs about 10 minutes to warm up.</p>
@@ -41,6 +42,7 @@ async function refresh() {
   reducing.textContent = s.reducing + ' kΩ';
   oxidising.textContent = s.oxidising + ' kΩ';
   nh3.textContent = s.nh3 + ' kΩ';
+  lux.textContent = s.lux + ' lux';
   motion.textContent = s.motion ? 'Yes' : 'No';
   light.textContent = s.light ? 'ON' : 'OFF';
   pmcard.classList.toggle('warn', s.ventilate);

@@ -28,6 +28,7 @@ class MockSensors:
             "oxidising": round(random.uniform(10, 30), 1),
             "reducing": round(random.uniform(200, 400), 1),
             "nh3": round(random.uniform(50, 150), 1),
+            "lux": round(random.uniform(100, 400), 1),
             "motion": time.time() < self._motion_until,
         }
 
@@ -36,7 +37,7 @@ class MockSensors:
 
 
 class PiSensors:
-    """Pimoroni Enviro+ HAT (BME280, MICS6814 gas, optional PMS5003), PIR on GPIO17, light on GPIO26."""
+    """Pimoroni Enviro+ HAT (BME280, MICS6814 gas, LTR559 light, optional PMS5003), PIR on GPIO17, light on GPIO26."""
 
     def __init__(self):
         import gpiod
@@ -44,10 +45,12 @@ class PiSensors:
         from bme280 import BME280
         from enviroplus import gas
         from gpiod.line import Direction, Value
+        from ltr559 import LTR559
         from smbus2 import SMBus
 
         self.bme280 = BME280(i2c_dev=SMBus(1))
         self.gas = gas
+        self.ltr559 = LTR559()
         self.Value = Value
         self.pir = gpiodevice.get_pin("GPIO17", "smarthome-pir", gpiod.LineSettings(direction=Direction.INPUT))
         # GPIO27 is taken by the PMS5003 reset pin
@@ -79,6 +82,7 @@ class PiSensors:
             "oxidising": round(g.oxidising / 1000, 1),
             "reducing": round(g.reducing / 1000, 1),
             "nh3": round(g.nh3 / 1000, 1),
+            "lux": round(self.ltr559.get_lux(), 1),
             "motion": self.pir[0].get_value(self.pir[1]) == self.Value.ACTIVE,
         }
 

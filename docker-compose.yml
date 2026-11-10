@@ -14,6 +14,5 @@ services:
     # give the container access to GPIO pins, I2C (Enviro+ sensors) and the UART (PMS5003)
     devices:
       - /dev/gpiochip0
-      - /dev/gpiomem
       - /dev/i2c-1
       - /dev/serial0

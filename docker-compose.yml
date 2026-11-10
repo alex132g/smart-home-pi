@@ -15,4 +15,4 @@ services:
     devices:
       - /dev/gpiochip0
       - /dev/i2c-1
-      - /dev/serial0
+      # - /dev/serial0  # uncomment together with PMS5003=1
